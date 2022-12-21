@@ -37,6 +37,9 @@ Note - After training the model, we saved it named ```xception_v4_1_10_0.998.h5`
 - Now we convert the ```xception_v4_1_10_0.998.h5``` keras model into ```tflite``` format which is lightweight and used only for inference and deployment on the cloud. For converting the keras model from ```.h5``` format to ```.tflite``` format, we use the notebook ```tensorflow-lite-model.ipynb``` and convert the model as ```vegclass-model.tflite``` which we will use further for deployment.
 - Now we create the Flask app (using gunicorn production ready webserver). So run the ```predict.py``` file using ```gunicorn --bind 0.0.0.0:9696 predict:app``` and the server run on ```localhost``` on port ```9696``` .
 - Open another terminal and run the ```test.py``` file using ```python test.py``` and we see the results/predcition of image classification by our model running as webservice.
+![gunicron webservice](https://user-images.githubusercontent.com/32613450/208980844-a3bc9245-f270-4cad-b3da-18a92cb0f298.png)
+![response testpy](https://user-images.githubusercontent.com/32613450/208981095-37fd2371-a885-486a-a318-e01875b31ef5.png)
+
 
 -- Now we have our model running as web service locally, but we will deploy it on cloud using AWS Lambda and for that we need to package all the libraries and files in the ```Dockerfile``` 
 
@@ -110,6 +113,9 @@ It will return the URI for the repository, note it down.
      ```docker push ${REMOTE_URI}```
 
 - now we can check the aws ecr section using the AWS graphical/website console that the image has been successfully pushed to ecr repository
+![ecr repo](https://user-images.githubusercontent.com/32613450/208981314-71f301bd-1645-418c-8fbf-3eb51a567e56.png)
+![ecr repo console](https://user-images.githubusercontent.com/32613450/208981349-a25014d8-b43c-48ea-a14e-ed4bb9722926.png)
+
 
 --- 
 ## Deploying the Docker Image from ECR using the AWS Lambda
@@ -118,29 +124,51 @@ It will return the URI for the repository, note it down.
 - go to AWS Lambda ---> Create Function ,
 See the screenshots below 
 creating the lambda function
+![lambda function choose container](https://user-images.githubusercontent.com/32613450/208981527-692638e8-d605-4e94-96f2-0d37525f6d99.jpg)
+
 - we need to change the default configurations
 Edit -> increase the memory to 1024 or more and timeout to 30 seconds
 
+![select configuration](https://user-images.githubusercontent.com/32613450/208981609-7fcef579-5ccb-4fd3-9122-a67138a97f34.png)
+![edit config of lambda](https://user-images.githubusercontent.com/32613450/208981719-b083c60d-49b5-4a12-a669-65eb3baa3a21.png)
+
 - Now go to test and create an test event
 after the setup, we can test the event and see the same results which were available for us for local setup
+![lambda test creation](https://user-images.githubusercontent.com/32613450/208981845-baf4ac29-8122-4d31-8f33-32628e10c273.png)
+![json event test](https://user-images.githubusercontent.com/32613450/208981872-dba02bcf-ecf5-495f-9dbf-6da3154d8e4a.png)
+![test success response](https://user-images.githubusercontent.com/32613450/208981925-f9863cc2-a956-47c1-8b2a-e6a73c268de4.png)
+
 
 - now we can use the created lambda fucntion and expose it as a web service using API gateway
 
 - go to API Gateway --> REST API
 Choose new api --> fill the name --> create api (See screenshots)
+![api gateway console first](https://user-images.githubusercontent.com/32613450/208982012-4caa89df-686d-49ee-a26d-25aea7d0bf44.png)
+
 
 - go to actions --> create resources --> set the endpoint name as predict and create it
 
+![api gateway create resource](https://user-images.githubusercontent.com/32613450/208982194-8ffc730b-167c-4698-9161-8489823f8149.png)
+![api gateway resource2](https://user-images.githubusercontent.com/32613450/208982230-1937c5af-50c0-41d2-9e3d-8d0745ac8bde.png)
+
 - now again choose the actions --> select the method (POST)
+![api gate post method setup](https://user-images.githubusercontent.com/32613450/208982334-e7a53a8f-6ecd-4fbd-8710-e737eb4b997b.png)
+
 now choose the lambda function (select the earlier created lambda function ) and save it
 
+
 - now grant the permission of gateway service to invoke the lambda function
+![permission for gate to lambda](https://user-images.githubusercontent.com/32613450/208982481-2b2d49e1-41db-461d-a10c-7c0decb6fec6.png)
+
 
 - now it will give a visual representation and choose the test
+![test visual](https://user-images.githubusercontent.com/32613450/208982537-25a977af-21bd-4e42-bedf-20b27db7799a.png)
+
 
 - click on test --> and put the json in request body
 
-- now we can see that it respond with the result of claissification from our model which was deployed using the lambda function
+
+- now we can see that it respond with the result of classification from our model which was deployed using the lambda function
 
 - now we can take this api gateway and deploy it (or expose it) , create new stage (name it anything) and click deploy
 
@@ -150,5 +178,7 @@ now choose the lambda function (select the earlier created lambda function ) and
 - the above api gawateway method will invoke the lambda fucntion and provide us the results.
 
 - now using the terminal we can test our test.py script and it goes to api gateway which in turn invoke the lambda fucntion and it returns the response to api gateway and pai gawateway to our local client
+![response testpy](https://user-images.githubusercontent.com/32613450/208982757-a48ba312-ca47-4bad-999a-004d91995613.png)
+
 
 - this is how we turn our lambda function to a web service using the api gateway.
